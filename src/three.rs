@@ -1,5 +1,3 @@
-use std::thread::AccessError;
-
 use regex::Regex;
 
 fn memory() -> String {
@@ -15,25 +13,22 @@ mul(315,935)mul(451,658)when()when(353,392)<<select())$,mul(842,863,who()?}<mul(
 pub fn three_a() {
 
 	let input = memory();
-	let re = Regex::new(r"mul\(\d{1,3},\d{1,3}\)").unwrap();
-	let extract_numbers = Regex::new(r"\d{1,3}").unwrap();
+	let re = Regex::new(r"(?x)
+        mul\(
+            (?P<num1>\d{1,3}),
+            (?P<num2>\d{1,3})
+        \)
+    ").unwrap();
 
-	let results: Vec<&str> = re.find_iter(&input)
-        .map(|mat| mat.as_str())
-        .collect();
-
-	let mut sum: i32 = 0;
-
-	for instruction in results {
-		let nums : Vec<i32> = extract_numbers.find_iter(
-			instruction).map(
-				|mat| mat.as_str().parse().expect("Not a valid number")
-			).collect();
-		if nums.len() == 2 {
-			sum += nums[0] * nums[1];
-		} else { 
-			println!("Error! Only one number found for some reason, investigate this.");
-		}
+	let mut sum: u32 = 0;
+	for caps in re.captures_iter(&input) {
+		if let (Some(num1), Some(num2)) = (caps.name("num1"), caps.name("num2")) {
+            let a: u32 = num1.as_str().parse().expect("Not a valid number");
+            let b: u32 = num2.as_str().parse().expect("Not a valid number");
+            sum += a * b;
+        } else {
+            println!("Error! Could not extract numbers.");
+        }
 	}
 
 	println!("Sum of valid products {}", sum);
@@ -50,7 +45,7 @@ pub fn three_b() {
         \)
     ").unwrap();
 
-    let mut sum: i32 = 0;
+    let mut sum: u32 = 0;
     let mut active: bool = true;
 
     for caps in re.captures_iter(&input) {
@@ -69,8 +64,8 @@ pub fn three_b() {
         }
 
         if let (Some(num1), Some(num2)) = (caps.name("num1"), caps.name("num2")) {
-            let a: i32 = num1.as_str().parse().expect("Not a valid number");
-            let b: i32 = num2.as_str().parse().expect("Not a valid number");
+            let a: u32 = num1.as_str().parse().expect("Not a valid number");
+            let b: u32 = num2.as_str().parse().expect("Not a valid number");
             sum += a * b;
         } else {
             println!("Error! Could not extract numbers.");
