@@ -40,55 +40,42 @@ pub fn three_a() {
 }
 
 pub fn three_b() {
+    let input = memory();
+    let re = Regex::new(r"(?x)
+        (?P<do>do\(\)) |
+        (?P<dont>don't\(\)) |
+        mul\(
+            (?P<num1>\d{1,3}),
+            (?P<num2>\d{1,3})
+        \)
+    ").unwrap();
 
-	let input = memory();
-	let re = Regex::new(r"mul\(\d{1,3},\d{1,3}\)|do\(\)|don't\(\)").unwrap();
-	let extract_numbers: Regex = Regex::new(r"\d{1,3}").unwrap();
-	let extract_do : Regex = Regex::new(r"do\(\)").unwrap();
-	let extract_dont : Regex = Regex::new(r"don't\(\)").unwrap();
+    let mut sum: i32 = 0;
+    let mut active: bool = true;
 
-	let results: Vec<&str> = re.find_iter(&input)
-        .map(|mat| mat.as_str())
-        .collect();
+    for caps in re.captures_iter(&input) {
+        if caps.name("do").is_some() {
+            active = true;
+            continue;
+        }
 
-	let mut sum: i32 = 0;
+        if caps.name("dont").is_some() {
+            active = false;
+            continue;
+        }
 
-	let mut active : bool = true;
-	for instruction in results {
+        if !active {
+            continue;
+        }
 
-		let do_trigger : Vec<&str> = extract_do.find_iter(
-			instruction).map(
-				|mat| mat.as_str()
-			).collect();
-		if do_trigger.len() > 0 {
-			active = true;
-			continue;
-		}
+        if let (Some(num1), Some(num2)) = (caps.name("num1"), caps.name("num2")) {
+            let a: i32 = num1.as_str().parse().expect("Not a valid number");
+            let b: i32 = num2.as_str().parse().expect("Not a valid number");
+            sum += a * b;
+        } else {
+            println!("Error! Could not extract numbers.");
+        }
+    }
 
-		let dont_trigger : Vec<&str> = extract_dont.find_iter(
-			instruction).map(
-				|mat| mat.as_str()
-			).collect();
-		if dont_trigger.len() > 0 {
-			active = false;
-			continue;
-		}
-
-		if !active{
-			continue;
-		}
-
-		let nums : Vec<i32> = extract_numbers.find_iter(
-			instruction).map(
-				|mat| mat.as_str().parse().expect("Not a valid number")
-			).collect();
-		
-		if nums.len() == 2 {
-			sum += nums[0] * nums[1];
-		} else {
-			println!("Error! Only one number found for some reason, investigate this.");
-		}
-	}
-
-	println!("Sum of valid products {}", sum);
+    println!("Sum of valid products {}", sum);
 }
