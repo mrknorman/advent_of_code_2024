@@ -2,6 +2,7 @@ mod one;
 mod two;
 mod three;
 mod four;
+mod five;
 
 fn main(){
     //10.2 ms ±  12.9 ms 
@@ -23,4 +24,9 @@ fn main(){
     four::four_a();
     //8.3 ms ± 11.5 ms 
     four::four_b();
+
+    // 9.1 ms ±   7.8 ms
+    five::five_a();
+    // 3.6 ms ±   6.3 ms  
+    five::five_b();
 }
