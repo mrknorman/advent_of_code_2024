@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use regex::Regex;
-
 fn rules() -> HashMap<i8, Vec<i8>> {
 	let ruleset = r#"24|55
 38|32
