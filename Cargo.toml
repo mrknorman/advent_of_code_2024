@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 regex = "1.11.1"
+serde = "1.0.215"
+serde_scan = "0.4.1"

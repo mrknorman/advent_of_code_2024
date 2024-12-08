@@ -3,21 +3,6 @@ use std::{
 	ops::{AddAssign, SubAssign, Add}
 };
 
-fn test_maze() ->  Vec<String> {
-vec![
-	"....#.....".to_string(),
-	".........#".to_string(),
-	"..........".to_string(),
-	"..#.......".to_string(),
-	".......#..".to_string(),
-	"..........".to_string(),
-	".#..^.....".to_string(),
-	"........#.".to_string(),
-	"#.........".to_string(),
-	"......#...".to_string()
-]
-}
-
 fn get_maze() -> Vec<String> {
 	vec![
 		"....................................#............##........#..#.#..#.........#.............#..............#.......................".to_string(),
@@ -243,62 +228,45 @@ fn get_initial_position_and_direction(
 }
 
 
-fn check_escape(maze : Vec<String>, initial_position : Option<Vec2>, initial_direction : Option<char>) -> i32 {
-
-	let mut maze = maze.clone();
-
-	let direction_map: HashMap<char, Vec2> = HashMap::from(
-		[
-			(UP, Vec2{row : -1, column : 0}),
-			(LEFT, Vec2{row : 0, column : -1}),
-			(DOWN, Vec2{row : 1, column : 0}),
-			(RIGHT, Vec2{row : 0, column : 1}),
-		]
-	);
+fn check_escape(mut maze : Vec<String>, initial_position : Option<Vec2>, initial_direction : Option<char>, direction_map : &HashMap<char, Vec2> ) -> i32 {
 
 	let mut current_direction : Option<char> = initial_direction;
 	let mut count = 1;
-	let mut history: Vec<(Vec2, char)> = vec![];
-
+	
 	if let Some(mut position) = initial_position {
 		let num_rows = maze[0].len() as i16;
 		let num_columns = maze.len() as i16;
 
 		// Ensure current_direction is Some. If not, handle that case.
 		while let Some(current_character) = get_value(&maze, &position, num_rows, num_columns) {
-			match current_character {
-				EMPTY | UP | DOWN | RIGHT | LEFT => {
-					if let Some(current_direction) = current_direction {
 
-						if history.iter().any(|(pos, d)| *pos == position && *d == current_direction) {
-							return -1;
-						} else {
-							history.push((position, current_direction));
-						}
+			if current_character != WALL {
+				if let Some(current_direction) = current_direction {
 
+					let next_character = get_value(&maze, &(position + direction_map[&current_direction]), num_rows, num_columns);
+					if  next_character == Some(current_direction)  {
+						return -1;
+					} 
+
+					if current_character == EMPTY { 
 						maze[position.row as usize].replace_range(
 							position.column as usize..position.column as usize+1, &current_direction.to_string()
 						);
-						position += direction_map[&current_direction];
-						
-						if current_character == EMPTY {
-							count += 1;
-						}
-					} else {
-						panic!("No current direction set!");
-					}
-				}
-				WALL => {
-					if let Some(dir) = current_direction {
 
-						position -= direction_map[&dir];
-						current_direction = Some(adjust_direction(dir));
-						continue;
-					} else {
-						panic!("No current direction set!");
+						count += 1;
 					}
+					position += direction_map[&current_direction];
+				} else {
+					panic!("No current direction set!");
 				}
-				_ => panic!("Unrecognized symbol!"),
+			} else {
+				if let Some(dir) = current_direction {
+					position -= direction_map[&dir];
+					current_direction = Some(adjust_direction(dir));
+					continue;
+				} else {
+					panic!("No current direction set!");
+				}
 			}
 		}
 	}
@@ -315,22 +283,24 @@ pub fn six_a() {
 
 	let (initial_position, initial_direction) = get_initial_position_and_direction(&maze, &direction_set);
 
-	println!("Route length {}", check_escape(maze, initial_position, initial_direction));
+	let direction_map:HashMap<char, Vec2>  = HashMap::from(
+		[
+			(UP, Vec2{row : -1, column : 0}),
+			(LEFT, Vec2{row : 0, column : -1}),
+			(DOWN, Vec2{row : 1, column : 0}),
+			(RIGHT, Vec2{row : 0, column : 1}),
+		]
+	);
+
+
+	println!("Route length {}", check_escape(maze, initial_position, initial_direction, &direction_map));
 }
 
 pub fn six_b() {
 
 	let maze = get_maze();
-
-	let directions: Vec<char> = vec![UP, LEFT, DOWN, RIGHT];	
-	let direction_set: HashSet<_> = directions.iter().copied().collect();
-
-	let (initial_position, initial_direction) = get_initial_position_and_direction(&maze.clone(), &direction_set);
-
-	println!("Route length {}", check_escape(maze.clone(), initial_position, initial_direction));
-
 	let mut checked_obstructions = HashSet::new();
-	let mut obs_positions = HashSet::new();
+	let mut obs_positions : i32 = 0;
 
 	let directions: Vec<char> = vec![UP, LEFT, DOWN, RIGHT];	
 	let direction_set: HashSet<_> = directions.iter().copied().collect();
@@ -362,20 +332,21 @@ pub fn six_b() {
 
 							let mut new_maze = maze.clone();
 
-							if in_bounds(&position, num_rows, num_columns) {
-								if maze[position.row as usize].chars().nth(position.column as usize) != Some(WALL) {
-									// Place a wall and reset the guard's path
-									new_maze[position.row as usize].replace_range(
-										position.column as usize..position.column as usize + 1,
-										&WALL.to_string(),
-									);
-								}
+							if maze[position.row as usize].chars().nth(position.column as usize) != Some(WALL) {
+								// Place a wall and reset the guard's path
+								new_maze[position.row as usize].replace_range(
+									position.column as usize..position.column as usize + 1,
+									&WALL.to_string(),
+								);
 							}
 
-							let num = check_escape(new_maze, Some(position),  Some(current_direction));
-							println!("{}", num);
-							if num == -1 {
-								obs_positions.insert(position);
+							if check_escape(
+								new_maze, 
+								Some(position),  
+								Some(current_direction),
+								&direction_map
+							) == -1 {
+								obs_positions += 1;
 							}
 						}
 						
@@ -386,7 +357,6 @@ pub fn six_b() {
 				}
 				WALL => {
 					if let Some(dir) = current_direction {
-
 						position -= direction_map[&dir];
 						current_direction = Some(adjust_direction(dir));
 						continue;
@@ -399,7 +369,7 @@ pub fn six_b() {
 		}
 	}
 
-	println!("Obstructions: {}", obs_positions.len());
+	println!("Obstructions: {}", obs_positions);
 } 
 
 
