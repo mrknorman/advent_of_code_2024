@@ -1,8 +1,11 @@
 use std::{
 	fs::File,
 	io::{self, BufRead},
-	path::Path
+	path::Path,
+	sync::atomic::{AtomicI64, Ordering}
 };
+
+use rayon::prelude::*;
 
 #[derive(Debug, Clone)]
 struct Equation{
@@ -89,17 +92,19 @@ impl Equations {
 	}
 
 	fn test(&mut self, operations_options: &[Operations]) {
-		self.total = 0;
-		for equation in &mut self.equations {
-
+		let total = AtomicI64::new(0);
+	
+		self.equations.par_iter_mut().for_each(|equation| {
 			equation.check_add = operations_options.contains(&Operations::ADD);
 			equation.check_mult = operations_options.contains(&Operations::MULTIPLY);
 			equation.check_concat = operations_options.contains(&Operations::CONCATINATE);
-
+	
 			if equation.check(equation.target, equation.parts.len() as i64 - 1) {
-				self.total += equation.target;
+				total.fetch_add(equation.target, Ordering::Relaxed);
 			}
-		}
+		});
+	
+		self.total = total.load(Ordering::Relaxed);
 	}
 }
 
