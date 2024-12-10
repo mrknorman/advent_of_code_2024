@@ -43,20 +43,56 @@ impl CompressFrag for Vec<Option<u64>> {
 	}
 
 	fn compress_defrag(self) -> Vec<Option<u64>> {
-		let mut output = self.into_iter();
-		let mut compressed: Vec<Option<u64>> = Vec::new();
-		while let Some(front) = output.next() {
-			match front {
-				Some(value) => compressed.push(Some(value)),
-				None => {
-					while let Some(back) = output.next_back() {
-						compressed.push(back);
-						break;
+		let mut chunked: Vec<Vec<Option<u64>>> = self
+			.into_iter()
+			.chunk_by(|elt| *elt)
+			.into_iter()
+			.map(|(_, group)| group.collect())
+			.collect();
+	
+		let mut i = 0;
+	
+		while i < chunked.len() {
+			if chunked[i][0].is_none() {
+				let free_space_len = chunked[i].len();
+				let mut j = chunked.len() - 1;
+				let mut file_moved = false;
+	
+				while i < j {
+					if chunked[j][0].is_some() {
+						let file_len = chunked[j].len();
+	
+						if file_len <= free_space_len {
+							chunked[i] = std::mem::take(&mut chunked[j]);	
+							chunked[j] = vec![None; file_len];
+	
+							if j > 0 && chunked[j - 1][0].is_none() {
+								let left_chunk = chunked.swap_remove(j);
+								chunked[j - 1].extend(left_chunk);
+								j -= 1;
+							}
+	
+							if j + 1 < chunked.len() && chunked[j + 1][0].is_none() {
+								let right_chunk = chunked.swap_remove(j + 1);
+								chunked[j].extend(right_chunk);
+							}
+	
+							file_moved = true;
+							break;
+						}
 					}
+					j -= 1;
 				}
+	
+				if !file_moved {
+					i += 1;
+				}
+			} else {
+				i += 1;
 			}
-		}	
-		compressed
+		}
+		
+		chunked.into_iter().flatten().collect()
 	}
 }
 
@@ -79,56 +115,15 @@ impl CheckSum for Vec<Option<u64>> {
 pub fn nine_a() {
 
 	let input = include_str!("../res/09_input.txt").to_string();
-
 	let compressed = input.decompress().compress_frag();
-	
 	println!("{}", compressed.checksum());
 }
 
 pub fn nine_b() {
 
 	let input = include_str!("../res/09_input.txt").to_string();
-	
-	let decompressed: Vec<Option<u64>> = input.decompress();
-	let mut chunked: Vec<Vec<Option<u64>>> = decompressed
-        .into_iter()
-        .chunk_by(|elt| *elt) 
-        .into_iter()
-        .map(|(_, group)| group.collect()) 
-        .collect();
 
-	let mut i = 0;
+	let decompressed: Vec<Option<u64>> = input.decompress().compress_defrag();
 
-	while i < chunked.len() {
-		if chunked[i][0].is_none() {
-			// We found a free space chunk
-			let free_space_len = chunked[i].len();
-			let mut j = chunked.len() - 1;
-	
-			while i < j {
-				if let Some(_) = chunked[j][0] {
-					let file_len = chunked[j].len();
-	
-					if file_len <= free_space_len {
-						// Move entire file into free space
-						chunked[i] = chunked[j].clone();
-                    	// Replace original file position with free space
-                   		chunked[j] = vec![None; file_len];
-	
-						// Replace remaining free space if any
-						if file_len < free_space_len {
-							chunked.insert(i + 1, vec![None; free_space_len - file_len]);
-						}
-	
-						break; // File moved, break inner loop
-					}
-				}
-				j -= 1;
-			}
-		}
-		i += 1; // Move to next chunk
-	}
-
-	let decompressed: Vec<Option<u64>> = chunked.clone().into_iter().flatten().collect();
 	println!("{}", decompressed.checksum());
 }
