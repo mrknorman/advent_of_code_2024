@@ -53,5 +53,6 @@ fn main(){
 
 
     nine::nine_a();
+    nine::nine_b();
 
 }
