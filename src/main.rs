@@ -7,9 +7,10 @@ mod six;
 mod seven;
 mod eight;
 mod nine;
+mod ten;
+mod eleven;
 
 fn main(){
-    /*
     //10.2 ms ±  12.9 ms 
     one::one_a();
     //4.8 ms ±   6.4 ms
@@ -36,8 +37,8 @@ fn main(){
     five::five_b();
 
     //TODO: Optimise:
-    six::six_a();
-    six::six_b();
+    //six::six_a();
+    //six::six_b();
 
     //4.7 ms ±   8.7 ms
     seven::seven_a();
@@ -49,10 +50,14 @@ fn main(){
 
     //6.2 ms ± 5.1 ms
     eight::eight_b();
-    */
-
 
     nine::nine_a();
     nine::nine_b();
+
+    ten::ten_a();
+    ten::ten_b();
+
+    eleven::eleven_a();
+    eleven::eleven_b();
 
 }

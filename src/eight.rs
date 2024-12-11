@@ -1,5 +1,5 @@
 use nom::{
-    character::complete::{line_ending, none_of, one_of, anychar},
+    character::complete::{line_ending, anychar},
     multi::{many1, separated_list1},
     IResult,
 };
@@ -70,7 +70,7 @@ pub fn eight_a() {
 	let (bounds, data) = read();
 
 	let mut antinodes = vec![];
-	for (ch, vecs) in &data {
+	for (_, vecs) in &data {
 		let it : Vec<Vec<&IVec2>> = vecs.into_iter().combinations(2).collect();
 		let diffs : Vec<_> = it.iter().flat_map(|item| {
 			let diff = item[1] - item[0];
