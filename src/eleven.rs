@@ -1,12 +1,23 @@
-use rayon::prelude::*;
 use cached::proc_macro::cached;
 
+fn digit_count(mut x: u64) -> u32 {
+    if x == 0 {
+        return 1;
+    }
+    let mut count = 0;
+    while x > 0 {
+        x /= 10;
+        count += 1;
+    }
+    count
+}
+
 fn has_even_digits(num: u64) -> bool {
-    (num as f64).log10() as u64 % 2 == 1
+    digit_count(num) % 2 == 0
 }
 
 fn split_number(input: u64) -> (u64, u64) {
-    let digits = (input as f64).log10() as u32 + 1;
+    let digits = digit_count(input);
     let half = digits / 2;
     let divisor = 10u64.pow(half);
     (input / divisor, input % divisor)
@@ -35,7 +46,7 @@ pub fn eleven_a() {
         .collect();
 
     let list_len: u64 = include
-        .par_iter()
+        .iter()
         .map(|&value| apply_rules(value, 0, 25))
         .sum();
         
@@ -49,7 +60,7 @@ pub fn eleven_b() {
         .collect();
 
     let list_len: u64 = include
-        .par_iter()
+        .iter()
         .map(|&value| apply_rules(value, 0, 70))
         .sum();
         

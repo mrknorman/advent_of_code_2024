@@ -9,6 +9,7 @@ mod eight;
 mod nine;
 mod ten;
 mod eleven;
+mod twelve;
 
 fn main(){
     //10.2 ms ±  12.9 ms 
@@ -59,5 +60,8 @@ fn main(){
 
     eleven::eleven_a();
     eleven::eleven_b();
+
+    twelve::twelve_a();
+    twelve::twelve_b();
 
 }
